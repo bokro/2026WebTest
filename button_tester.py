@@ -3,55 +3,47 @@
 웹사이트의 모든 버튼을 찾아서 클릭 테스트를 수행하는 기능 제공
 """
 
-from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException, ElementClickInterceptedException, StaleElementReferenceException
 import time
+from loginModule.driver_manager import DriverManager
 
 
 class ButtonTester:
-    def __init__(self, url, driver_path=None, headless=False):
+    def __init__(self, url, driver_path=None, headless=False, browser="chrome"):
         """
         웹사이트의 모든 버튼을 테스트하는 클래스
         
         Args:
             url: 테스트할 웹사이트 URL
-            driver_path: ChromeDriver 경로 (None이면 자동으로 찾음)
+            driver_path: WebDriver 경로
             headless: 백그라운드 모드 실행 여부 (True: 브라우저 창 안 보임, False: 브라우저 창 보임)
+            browser: 브라우저 종류 ("chrome" 또는 "edge")
         """
         self.url = url
         self.driver = None
         self.button_results = []
         self.headless = headless
         self.driver_path = driver_path
+        self.browser = browser.lower()
         
     def setup_driver(self):
         """WebDriver 설정"""
-        options = webdriver.ChromeOptions()
+        self.driver = DriverManager.setup_driver(
+            browser=self.browser,
+            driver_path=self.driver_path,
+            headless=self.headless
+        )
         
         if self.headless:
-            options.add_argument('--headless')
-            options.add_argument('--disable-gpu')
-            options.add_argument('--no-sandbox')
-            options.add_argument('--disable-dev-shm-usage')
-            options.add_argument('--window-size=1920,1080')
-            print("백그라운드 모드로 실행 중... (브라우저 창이 보이지 않습니다)")
+            print(f"백그라운드 모드로 {self.browser.upper()} 실행 중... (브라우저 창이 보이지 않습니다)")
         else:
-            options.add_argument('--start-maximized')
-            print("일반 모드로 실행 중... (브라우저 창이 표시됩니다)")
+            print(f"일반 모드로 {self.browser.upper()} 실행 중... (브라우저 창이 표시됩니다)")
         
-        if hasattr(webdriver, 'Chrome'):
-            if self.driver_path:
-                from selenium.webdriver.chrome.service import Service
-                service = Service(executable_path=self.driver_path)
-                self.driver = webdriver.Chrome(service=service, options=options)
-                print(f"ChromeDriver 경로: {self.driver_path}")
-            else:
-                self.driver = webdriver.Chrome(options=options)
-        else:
-            raise Exception("Chrome WebDriver를 찾을 수 없습니다.")
+        if self.driver_path:
+            print(f"WebDriver 경로: {self.driver_path}")
     
     def find_all_buttons(self):
         """페이지에서 모든 버튼 요소 찾기"""
